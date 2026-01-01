@@ -14,5 +14,21 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
     - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag poker-server:$(date +%s)
+      run: |
+        docker build ./server \
+          --file ./server/Dockerfile \
+          --tag poker-server:latest \
+          --tag poker-server:$(date +%s)
+
+    - name: Test the Docker image
+      run: |
+        docker run -d --name poker-test -p 8000:8000 poker-server:latest
+        sleep 5
+        curl -f http://localhost:8000/health || exit 1
+        docker stop poker-test
+        docker rm poker-test
